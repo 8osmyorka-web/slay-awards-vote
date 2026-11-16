@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: slay-awards-vote
+    runtime: static
+    buildCommand: node --check dist/app.js
+    staticPublishPath: ./dist
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
