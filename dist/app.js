@@ -2,6 +2,15 @@ const tg = window.Telegram?.WebApp;
 try { tg?.ready(); tg?.expand(); tg?.setHeaderColor('#ffffff'); tg?.setBackgroundColor('#ffffff'); } catch {}
 const app = document.querySelector('#app');
 let questions=[], answers=[], screen='home', index=0, editing=false, sending=false;
+const nominationClips=[
+ {name:'Даниил Конюшевский',src:'videos/01-kony.mp4'},
+ {name:'Тимофей Шевченко',src:'videos/02-shevchenko.mp4'},
+ {name:'Тимур Юревич',src:'videos/03-timur.mp4'},
+ {name:'Даниил Погребнев',src:'videos/04-pogrebnev.mp4'},
+ {name:'Марк Статкевич',src:'videos/05-mark.mp4'}
+];
+let clipIndex=0, clipsFinished=false;
+const clipsWatched=Array(nominationClips.length).fill(false);
 const draftKey='slay-vote-v3';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num=n=>String(n).padStart(2,'0');
@@ -9,7 +18,21 @@ function save(){try{sessionStorage.setItem(draftKey,JSON.stringify(answers))}cat
 function toast(text){const el=document.querySelector('#toast');el.textContent=text;el.style.display='block';setTimeout(()=>el.style.display='none',5000)}
 function go(s){screen=s;render();window.scrollTo({top:0,behavior:'instant'})}
 function complete(){return questions.every((q,i)=>Number.isInteger(answers[i])&&answers[i]>=0&&answers[i]<q.options.length)}
+function renderClips(){
+ const clip=nominationClips[clipIndex];
+ app.innerHTML=`<div class="question-top"><span class="eyebrow">НОМИНАЦИЯ 05 / 09</span><span class="eyebrow">ВИДЕО ${clipIndex+1} / ${nominationClips.length}</span></div><section class="voting clip-stage"><div class="question-aside"><span class="eyebrow">SLAY / ВЫБОР ГОДА</span><h1>${esc(questions[4].text)}</h1><p class="hint">Посмотрите пять видео по очереди.<br>Затем выберите номинанта.</p></div><div><p class="clip-name">${esc(clip.name)}</p><video id="nomination-video" class="nomination-video" src="${clip.src}" controls playsinline preload="metadata" aria-label="Видео: ${esc(clip.name)}"></video><p id="clip-status" class="hint" role="status">${clipsWatched[clipIndex]?'Видео просмотрено. Можно продолжить.':'Нажмите воспроизведение. После окончания видео станет доступен следующий шаг.'}</p><button class="text-btn" id="retry-video" hidden>Загрузить видео заново</button><div class="controls"><button class="text-btn" id="clip-back">← Назад</button><button class="primary" id="clip-next" ${clipsWatched[clipIndex]?'':'disabled'}><span>${clipIndex===nominationClips.length-1?'К вариантам ответа':'Следующее видео'}</span><span class="arrow">↗</span></button></div></div></section>`;
+ const video=document.querySelector('#nomination-video');
+ const next=document.querySelector('#clip-next');
+ video.onended=()=>{clipsWatched[clipIndex]=true;next.disabled=false;document.querySelector('#clip-status').textContent='Видео просмотрено. Можно продолжить.'};
+ video.onerror=()=>{document.querySelector('#clip-status').textContent='Не удалось загрузить видео. Проверьте подключение и попробуйте снова.';document.querySelector('#retry-video').hidden=false};
+ document.querySelector('#retry-video').onclick=()=>{video.load();document.querySelector('#retry-video').hidden=true;document.querySelector('#clip-status').textContent='Нажмите воспроизведение.'};
+ document.querySelector('#clip-back').onclick=()=>{if(clipIndex){clipIndex--;go('vote')}else if(editing){editing=false;go('review')}else{index=3;go('vote')}};
+ next.onclick=()=>{if(!clipsWatched[clipIndex])return;if(clipIndex<nominationClips.length-1){clipIndex++;go('vote')}else{clipsFinished=true;go('vote')}};
+}
 function render(){
+ document.querySelector('#nomination-video')?.pause?.();
+ if(screen==='vote'&&index===4&&!clipsFinished){renderClips();return;}
+
  if(screen==='home'){
  app.innerHTML=`<section class="hero"><div class="hero-side"><span class="year">2026</span><p>Люди, моменты и фразы,<br>которые сделали этот год.</p></div><div><h1>ГОЛОСО<wbr>ВАНИЕ</h1><p class="intro">Белла Порч - Братан Коч</p><button class="primary" id="begin"><span>${answers.some(Number.isInteger)?'Продолжить голосование':'Начать Голосование'}</span><span class="arrow">↗</span></button><p class="privacy">После отправки организатор получит ваши ответы, имя и Telegram ID. Один выбор в каждой номинации.</p></div></section><section class="directory" aria-label="Номинации">${questions.map((q,i)=>`<div class="tile"><span>${num(i+1)}</span><strong>${esc(q.text)}</strong></div>`).join('')}</section>`;
  document.querySelector('#begin').onclick=()=>{index=answers.findIndex(a=>!Number.isInteger(a));if(index<0||index>=questions.length)index=0;go(complete()?'review':'vote')};
