@@ -1,5 +1,5 @@
 const tg = window.Telegram?.WebApp;
-try { tg?.ready(); tg?.expand(); tg?.setHeaderColor('#ffffff'); tg?.setBackgroundColor('#ffffff'); } catch {}
+try { tg?.ready(); tg?.expand(); tg?.setHeaderColor('#d8d8d8'); tg?.setBackgroundColor('#d8d8d8'); } catch {}
 const app = document.querySelector('#app');
 let questions=[], answers=[], screen='home', index=0, editing=false, sending=false;
 const nominationClips=[
@@ -34,7 +34,7 @@ function render(){
  if(screen==='vote'&&index===4&&!clipsFinished){renderClips();return;}
 
  if(screen==='home'){
- app.innerHTML=`<section class="hero"><div class="hero-side"><span class="year">2026</span><p>Люди, моменты и фразы,<br>которые сделали этот год.</p></div><div><h1>ГОЛОСО<wbr>ВАНИЕ</h1><p class="intro">Белла Порч - Братан Коч</p><button class="primary" id="begin"><span>${answers.some(Number.isInteger)?'Продолжить голосование':'Начать Голосование'}</span><span class="arrow">↗</span></button><p class="privacy">После отправки организатор получит ваши ответы, имя и Telegram ID. Один выбор в каждой номинации.</p></div></section><section class="directory" aria-label="Номинации">${questions.map((q,i)=>`<div class="tile"><span>${num(i+1)}</span><strong>${esc(q.text)}</strong></div>`).join('')}</section>`;
+ app.innerHTML=`<section class="hero"><div class="hero-side"><span class="year">2026</span><p>Люди, моменты и фразы,<br>которые сделали этот год.</p></div><div class="hero-sculpture" aria-hidden="true"><img src="assets/form-sculpture.png" alt="" width="1024" height="1536" fetchpriority="high"></div><div class="hero-copy"><h1>ГОЛОСО<wbr>ВАНИЕ</h1><p class="intro">Белла Порч - Братан Коч</p><button class="primary" id="begin"><span>${answers.some(Number.isInteger)?'Продолжить голосование':'Начать Голосование'}</span><span class="arrow">↗</span></button><p class="privacy">После отправки организатор получит ваши ответы, имя и Telegram ID. Один выбор в каждой номинации.</p></div></section><section class="directory" aria-label="Номинации">${questions.map((q,i)=>`<div class="tile"><span>${num(i+1)}</span><strong>${esc(q.text)}</strong></div>`).join('')}</section>`;
  document.querySelector('#begin').onclick=()=>{index=answers.findIndex(a=>!Number.isInteger(a));if(index<0||index>=questions.length)index=0;go(complete()?'review':'vote')};
  }else if(screen==='vote'){
  const q=questions[index];
